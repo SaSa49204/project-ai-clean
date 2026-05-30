@@ -627,7 +627,7 @@ Conversation History:
                     "content": prompt
                 }
             ],
-            temperature=0.6
+            temperature=0.3
         )
 
         response = res.choices[0].message.content.strip()
@@ -731,7 +731,7 @@ Conversation History:
 # ================= MEMORY =================
     def _get_memory(self, sid):
  
-        history = self.history.get(sid, [])[-10:]
+        history = self.history.get(sid, [])[-5:]
 
         memory = ""
 
