@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import requests
 import os
+import PyPDF2
 
 from langdetect import detect
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -406,6 +407,10 @@ Rules:
             self._get_previous_courses()
         )
 
+        current = self._extract_names(
+            self._get_current_courses()
+    )
+
         gpa = self._get_gpa()
 
         available = []
@@ -415,6 +420,9 @@ Rules:
             name = course["name"]
 
             if name in completed:
+                continue
+
+            if name in current:
                 continue
 
             if all(p in completed for p in course["prereq"]):
@@ -436,24 +444,50 @@ Rules:
     def _explain_course(self, course_name, lang="en"):
 
         prompt = f"""
-Explain the course "{course_name}" deeply like ChatGPT tutor.
+اشرح مادة {course_name} كأنك أستاذ جامعي وخبير أكاديمي.
 
-Language:
-{"Arabic" if lang == "ar" else "English"}
+يجب أن يكون الرد منظمًا بهذا الشكل:
 
-Rules:
-- Explain naturally
-- No markdown
-- No stars
-- Explain:
-1. Course idea
-2. Main topics
-3. Real applications
-4. Difficulty
-5. Study roadmap
-6. How to excel
-7. Common mistakes
-- Make explanation engaging
+📘 اسم المادة
+
+🎯 ما هي المادة؟
+شرح مبسط وواضح.
+
+📚 أهم الموضوعات:
+- ...
+- ...
+- ...
+
+💻 التطبيقات العملية:
+- ...
+- ...
+- ...
+
+⚠️ مستوى الصعوبة:
+سهل / متوسط / صعب مع التوضيح.
+
+🗺️ Roadmap للمذاكرة:
+الأسبوع الأول:
+...
+
+الأسبوع الثاني:
+...
+
+📖 أفضل المصادر:
+YouTube:
+- اسم القناة
+
+Courses:
+- اسم الكورس
+
+Books:
+- اسم الكتاب
+
+💡 نصائح للتفوق:
+- ...
+- ...
+
+اكتب باللغة {"العربية" if lang=="ar" else "الإنجليزية"} فقط.
 """
 
         return self._ask_ai(
@@ -543,8 +577,6 @@ Create smart study plan.
         completed = self._extract_names(self._get_previous_courses())
         gpa = self._get_gpa()
 
-        completed = [c.lower() for c in completed]
-
         roadmap = []
         temp_done = completed.copy()
 
@@ -570,7 +602,7 @@ Create smart study plan.
             term = term[:5]
             roadmap.append(term)
 
-            temp_done.extend([c.lower() for c in term])
+            temp_done.extend(term)
 
         return roadmap
 
@@ -696,6 +728,27 @@ Conversation History:
             or "مواد الكلية" in q
         ):
             return "all_courses"
+        
+        if (
+            "مصادر" in q
+            or "كورسات" in q
+            or "resources" in q
+            or "best resources" in q
+       ):
+            return "resources"
+        
+        if (
+            "لخص الملف" in q
+            or "summarize file" in q
+        ):
+            return "summarize_pdf"
+
+        if (
+            "اعمل امتحان" in q
+            or "اختبرني" in q
+            or "quiz" in q
+        ):
+            return "quiz"
 
         return "faq"
 
@@ -728,10 +781,40 @@ Conversation History:
 
         self.history[sid] = self.history[sid][-20:]
 
+
+#============== PDF READING =================
+    def _read_pdf(self, path):
+
+        text = ""
+
+        with open(path, "rb") as file:
+
+            reader = PyPDF2.PdfReader(file)
+
+            for page in reader.pages:
+
+                content = page.extract_text()
+
+                if content:
+                    text += content
+
+        return text
+
+#================ LATEST PDF =================
+    def _get_latest_pdf(self):
+
+        with open(
+            "uploads/latest.txt",
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            return f.read().strip()
+
 # ================= MEMORY =================
     def _get_memory(self, sid):
  
-        history = self.history.get(sid, [])[-5:]
+        history = self.history.get(sid, [])[-20:]
 
         memory = ""
 
@@ -739,6 +822,15 @@ Conversation History:
             memory += f"User: {h['q']}\nBot: {h['a']}\n"
 
         return memory
+    
+#=================== CLEAN RESPONSE =================
+    def _clean_response(self, text):
+
+        text = text.replace("###", "\n")
+        text = text.replace("##", "\n")
+        text = text.replace("**", "")
+
+        return text
 
 # ================= MAIN =================
     def answer(self, question, student_id=None):
@@ -1002,7 +1094,7 @@ Rules:
                 lang
             )
 
-# ===== WEEKLY PLAN =====
+        # ===== WEEKLY PLAN =====
         elif intent == "weekly_plan":
 
             prompt = f"""
@@ -1030,7 +1122,7 @@ Rules:
                 lang
             )
 
-# ===== MONTHLY PLAN =====
+        # ===== MONTHLY PLAN =====
         elif intent == "monthly_plan":
 
             prompt = f"""
@@ -1059,6 +1151,69 @@ Rules:
                 lang
             )            
 
+        elif intent == "resources":
+
+            answer = self._ask_ai(
+        """
+Give the best resources for the last discussed course.
+
+Required:
+- Real YouTube URLs
+- Real Coursera URLs
+- Real edX URLs
+- Books
+- Short description for each
+
+Use actual links.
+
+Respond in the same language.
+""",
+            student_id,
+            lang
+    )
+        # ===== PDF SUMMARY =====
+        elif intent == "summarize_pdf":
+
+            pdf_text = self._read_pdf(
+                self._get_latest_pdf()
+            )
+            answer = self._ask_ai(
+                f"""
+Summarize this PDF document:
+
+{pdf_text[:12000]}
+""",
+            student_id,
+            lang
+        )
+
+
+        # ===== PDF QUIZ =====
+        elif intent == "quiz":
+
+            pdf_text = self._read_pdf(
+                self._get_latest_pdf()
+            )
+
+            answer = self._ask_ai(
+                f"""
+Create an exam from this content:
+
+{pdf_text[:12000]}
+
+Generate:
+
+5 MCQ Questions
+3 True/False
+2 Essay Questions
+
+Use the same language.
+""",
+            student_id,
+            lang
+        )
+        
+
         # ===== AI =====
         else:
 
@@ -1075,6 +1230,7 @@ Rules:
             answer
         )
 
+        answer = self._clean_response(answer)
         return {
             "answer": answer
         }

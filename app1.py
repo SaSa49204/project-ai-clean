@@ -13,6 +13,13 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 bot = FAQBot("data.csv")
 
+
+UPLOAD_FOLDER = "uploads"
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+    )
 # =====================================
 # STORAGE
 # =====================================
@@ -132,6 +139,7 @@ def chat():
         print("ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
+    
 # =====================================
 # LIST SESSIONS
 # =====================================
@@ -281,6 +289,36 @@ def rename_session(session_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/upload", methods=["POST"])
+def upload_file():
+
+    if "file" not in request.files:
+        return {
+            "error":"No file"
+        },400
+
+    file = request.files["file"]
+
+    path = os.path.join(
+        UPLOAD_FOLDER,
+        file.filename
+    )
+
+    file.save(path)
+
+    with open(
+        "uploads/latest.txt",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(path)
+
+    return {
+        "message":"uploaded",
+        "file":file.filename
+    }
 # =====================================
 # HEALTH
 # =====================================
