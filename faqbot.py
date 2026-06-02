@@ -1297,6 +1297,7 @@ Use the same language.
         )
 
         answer = self._clean_response(answer)
+        print("INTENT =", intent)
         return {
             "answer": answer
         }
