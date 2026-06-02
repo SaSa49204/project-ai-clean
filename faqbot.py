@@ -443,51 +443,139 @@ Rules:
 # ================= EXPLAIN COURSE =================
     def _explain_course(self, course_name, lang="en"):
 
-        prompt = f"""
+        if lang == "ar":
+
+            prompt = f"""
 اشرح مادة {course_name} كأنك أستاذ جامعي وخبير أكاديمي.
 
-يجب أن يكون الرد منظمًا بهذا الشكل:
+استخدم التنسيق التالي فقط:
 
 📘 اسم المادة
 
-🎯 ما هي المادة؟
-شرح مبسط وواضح.
+🔹 نبذة عامة
+اشرح المادة في فقرة قصيرة.
 
-📚 أهم الموضوعات:
-- ...
-- ...
-- ...
+🔹 أهم الموضوعات
+• موضوع 1
+• موضوع 2
+• موضوع 3
+• موضوع 4
 
-💻 التطبيقات العملية:
-- ...
-- ...
-- ...
+🔹 التطبيقات العملية
+• تطبيق 1
+• تطبيق 2
+• تطبيق 3
 
-⚠️ مستوى الصعوبة:
-سهل / متوسط / صعب مع التوضيح.
+⚠️ مستوى الصعوبة
+اشرح مستوى الصعوبة ولماذا.
 
-🗺️ Roadmap للمذاكرة:
-الأسبوع الأول:
+🗺️ خطة مذاكرة
+
+الأسبوع 1:
 ...
 
-الأسبوع الثاني:
+الأسبوع 2:
 ...
 
-📖 أفضل المصادر:
-YouTube:
+الأسبوع 3:
+...
+
+الأسبوع 4:
+...
+
+📖 أفضل المصادر
+
+📺 YouTube
 - اسم القناة
+- الرابط
 
-Courses:
+🎓 Courses
 - اسم الكورس
+- الرابط
 
-Books:
+📚 Books
 - اسم الكتاب
 
-💡 نصائح للتفوق:
-- ...
-- ...
+🌐 Websites
+- الرابط
 
-اكتب باللغة {"العربية" if lang=="ar" else "الإنجليزية"} فقط.
+💡 نصائح للتفوق
+• نصيحة 1
+• نصيحة 2
+• نصيحة 3
+
+مهم:
+- استخدم أسطر فارغة بين الأقسام.
+- لا تكتب الرد كله في فقرة واحدة.
+- اجعل الرد منظمًا وواضحًا.
+"""
+
+        else:
+
+            prompt = f"""
+Explain the course {course_name} as a university professor.
+
+Use exactly this format:
+
+📘 Course Name
+
+🔹 Overview
+Provide a short explanation.
+
+🔹 Important Topics
+• Topic 1
+• Topic 2
+• Topic 3
+• Topic 4
+
+🔹 Practical Applications
+• Application 1
+• Application 2
+• Application 3
+
+⚠️ Difficulty Level
+Explain the difficulty and why.
+
+🗺️ Study Roadmap
+
+Week 1:
+...
+
+Week 2:
+...
+
+Week 3:
+...
+
+Week 4:
+...
+
+📖 Best Resources
+
+📺 YouTube
+- Channel Name
+- URL
+
+🎓 Courses
+- Course Name
+- URL
+
+📚 Books
+- Book Name
+
+🌐 Websites
+- URL
+
+💡 Tips for Success
+• Tip 1
+• Tip 2
+• Tip 3
+
+Important:
+- Use blank lines between sections.
+- Do not write everything in one paragraph.
+- Use bullet points.
+- Include real URLs when possible.
 """
 
         return self._ask_ai(
@@ -635,25 +723,30 @@ Rules:
 
 Always organize answers.
 
-Use this format:
+Use this exact format:
 
 📘 Title
 
 🔹 Overview
 
-text
+Short explanation.
 
 🔹 Important Topics
 
-• item
-• item
+• Topic 1
+• Topic 2
+• Topic 3
 
 🔹 Applications
 
-• item
-• item
+• Application 1
+• Application 2
 
-🔹 Roadmap
+⚠️ Difficulty
+
+Short explanation.
+
+🗺️ Roadmap
 
 Week 1:
 ...
@@ -661,21 +754,32 @@ Week 1:
 Week 2:
 ...
 
-🔹 Resources
+📖 Resources
 
 📺 YouTube
+Name:
+URL:
+
 🎓 Courses
+Name:
+URL:
+
 📚 Books
+
 🌐 Websites
+URL:
 
-🔹 Tips
+💡 Tips
 
-• item
-• item
+• Tip 1
+• Tip 2
 
-Never write one long paragraph.
-Always separate sections with blank lines.
-Respond in user's language.
+IMPORTANT:
+- Use blank lines between sections.
+- Never write one long paragraph.
+- Always use bullet points.
+- Always provide clickable URLs when recommending resources.
+- Respond in user's language.
 
 Student Information:
 - GPA: {gpa}
@@ -786,6 +890,18 @@ Conversation History:
             or "quiz" in q
         ):
             return "quiz"
+        if (
+            "current courses" in q
+            or "المواد الحالية" in q
+        ):
+            return "current"
+
+        if (
+            "completed courses" in q
+            or "previous courses" in q
+            or "المواد اللي خلصتها" in q
+       ):
+            return "previous"
 
         return "faq"
 
@@ -1221,20 +1337,19 @@ Required:
 
 📺 YouTube
 - Name
-- URL
+- Direct URL
 
 🎓 Courses
 - Name
-- URL
+- Direct URL
 
 📚 Books
 
 🌐 Websites
+- Direct URL
 
-Provide REAL URLs.
-
-Organize response clearly.
-
+Provide REAL clickable URLs.
+Do not provide fake links.
 Respond in same language.
 """,
             student_id,
