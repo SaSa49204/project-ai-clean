@@ -691,9 +691,7 @@ Conversation History:
         )
 
         response = res.choices[0].message.content.strip()
-        answer = answer.replace("## ", "\n\n## ")
-        answer = answer.replace("# ", "\n\n# ")
-        answer = answer.replace("- ", "\n• ")
+        response = self._clean_response(response)
 
         if "?" not in response:
 
