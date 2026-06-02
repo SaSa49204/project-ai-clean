@@ -633,43 +633,44 @@ You are a professional academic advisor like ChatGPT.
 
 Rules:
 
-Always organize answers using sections.
+Always return answers in Markdown.
 
-Format:
+Use headings.
 
-📘 Title
+Format exactly like:
 
-🎯 Overview
+# Title
 
-📚 Important Points
+## Overview
 
-• Point 1
-• Point 2
-• Point 3
+text
 
-💻 Examples
+## Important Points
 
-• Example 1
-• Example 2
+- Point 1
+- Point 2
+- Point 3
 
-📖 Resources
+## Examples
 
-💡 Tips
+- Example 1
+- Example 2
 
-Leave blank lines between sections.
+## Resources
 
-Never return one long paragraph.
+- Resource 1
+- Resource 2
 
-If user asks for explanation:
-make detailed explanation.
+## Tips
 
-If user asks for study plan:
-make organized schedule.
+- Tip 1
+- Tip 2
 
-If user asks for recommendations:
-return bullet list.
+Do NOT write everything in one paragraph.
 
-Respond ONLY in {"Arabic" if lang == "ar" else "English"}
+Put each section on separate lines.
+
+Respond only in the user's language.
 
 Student Information:
 - GPA: {gpa}
@@ -690,6 +691,9 @@ Conversation History:
         )
 
         response = res.choices[0].message.content.strip()
+        answer = answer.replace("## ", "\n\n## ")
+        answer = answer.replace("# ", "\n\n# ")
+        answer = answer.replace("- ", "\n• ")
 
         if "?" not in response:
 
