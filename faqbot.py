@@ -632,17 +632,44 @@ Create smart study plan.
 You are a professional academic advisor like ChatGPT.
 
 Rules:
-- Speak naturally like ChatGPT
-- Be conversational
-- Understand conversation context
-- Connect previous messages
-- Give smart personalized advice
-- No markdown
-- No stars
-- No bold text
-- Keep answers readable
-- Use clean formatting
-- Respond ONLY in {"Arabic" if lang == "ar" else "English"}
+
+Always organize answers using sections.
+
+Format:
+
+📘 Title
+
+🎯 Overview
+
+📚 Important Points
+
+• Point 1
+• Point 2
+• Point 3
+
+💻 Examples
+
+• Example 1
+• Example 2
+
+📖 Resources
+
+💡 Tips
+
+Leave blank lines between sections.
+
+Never return one long paragraph.
+
+If user asks for explanation:
+make detailed explanation.
+
+If user asks for study plan:
+make organized schedule.
+
+If user asks for recommendations:
+return bullet list.
+
+Respond ONLY in {"Arabic" if lang == "ar" else "English"}
 
 Student Information:
 - GPA: {gpa}
@@ -693,6 +720,9 @@ Conversation History:
 
         if "roadmap" in q or "خطة تخرج" in q:
             return "roadmap"
+        
+        if "كم عدد المواد" in q:
+            return "count_courses"
 
         if (
             "suggest" in q
@@ -826,11 +856,28 @@ Conversation History:
 #=================== CLEAN RESPONSE =================
     def _clean_response(self, text):
 
-        text = text.replace("###", "\n")
-        text = text.replace("##", "\n")
+        text = text.replace("###", "\n\n")
+        text = text.replace("##", "\n\n")
         text = text.replace("**", "")
 
-        return text
+        for i in range(1, 30):
+            text = text.replace(
+                f"{i}.",
+                f"\n\n{i}."
+            )
+
+        text = text.replace("•", "\n•")
+
+        text = text.replace("📘", "\n\n📘")
+        text = text.replace("🎯", "\n\n🎯")
+        text = text.replace("📚", "\n\n📚")
+        text = text.replace("💻", "\n\n💻")
+        text = text.replace("⚠️", "\n\n⚠️")
+        text = text.replace("🗺️", "\n\n🗺️")
+        text = text.replace("📖", "\n\n📖")
+        text = text.replace("💡", "\n\n💡")
+
+        return text.strip()
 
 # ================= MAIN =================
     def answer(self, question, student_id=None):
@@ -907,7 +954,15 @@ Conversation History:
                 if names
                 else "No previous"
             )
+        #===== COUNT COURSES =====
+        elif intent == "count_courses":
 
+            count = len(self.COURSE_GRAPH)
+
+            if lang == "ar":
+                answer = f"📚 إجمالي عدد المواد في الخطة الدراسية: {count}"
+            else:
+                answer = f"📚 Total courses in study plan: {count}"
         # ===== STUDY PLAN =====
         elif intent == "study_plan":
 
@@ -967,10 +1022,9 @@ Give smart study plan.
 
                 for i, term in enumerate(plan, 1):
 
-                    answer += (
-                        f"📚 ترم {i}: "
-                        f"{' - '.join(term)}\n"
-                    )
+                    answer += f"\n📚 ترم {i}\n\n"
+                    for course in term:
+                        answer += f"• {course}\n"
 
             else:
 
@@ -978,10 +1032,9 @@ Give smart study plan.
 
                 for i, term in enumerate(plan, 1):
 
-                    answer += (
-                        f"📚 Term {i}: "
-                        f"{' - '.join(term)}\n"
-                    )
+                    answer += f"\n📚 Term {i}\n\n"
+                    for course in term:
+                        answer += f"• {course}\n"
 
         # ===== EXPLAIN =====
         elif intent == "explain":
@@ -1150,23 +1203,32 @@ Rules:
                 student_id,
                 lang
             )            
-
+        # ===== RESOURCES =====
         elif intent == "resources":
 
             answer = self._ask_ai(
         """
-Give the best resources for the last discussed course.
+Give learning resources.
 
 Required:
-- Real YouTube URLs
-- Real Coursera URLs
-- Real edX URLs
-- Books
-- Short description for each
 
-Use actual links.
+📺 YouTube
+- Name
+- URL
 
-Respond in the same language.
+🎓 Courses
+- Name
+- URL
+
+📚 Books
+
+🌐 Websites
+
+Provide REAL URLs.
+
+Organize response clearly.
+
+Respond in same language.
 """,
             student_id,
             lang
