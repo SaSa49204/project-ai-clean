@@ -198,7 +198,7 @@ class FAQBot:
         # 👇 fallback للـ AI
         try:
             res = self.client.chat.completions.create(
-                model="gpt-5-mini",
+                model="gpt-4o-mini",
                 messages=[
                     {
                         "role": "system",
@@ -216,7 +216,8 @@ Rules:
                         "role": "user",
                         "content": question
                     }
-                ]
+                ],
+                temperature=0.3
             )
 
             title = res.choices[0].message.content.strip()
@@ -711,7 +712,7 @@ Create smart study plan.
         year = self._detect_student_year(completed)
 
         res = self.client.chat.completions.create(
-            model="gpt-5-mini",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
@@ -794,7 +795,8 @@ Conversation History:
                     "role": "user",
                     "content": prompt
                 }
-            ]
+            ],
+            temperature=0.3
         )
 
         response = res.choices[0].message.content.strip()
