@@ -216,8 +216,7 @@ Rules:
                         "role": "user",
                         "content": question
                     }
-                ],
-                temperature=0.3
+                ]
             )
 
             title = res.choices[0].message.content.strip()
@@ -795,8 +794,7 @@ Conversation History:
                     "role": "user",
                     "content": prompt
                 }
-            ],
-            temperature=0.3
+            ]
         )
 
         response = res.choices[0].message.content.strip()
@@ -1379,29 +1377,37 @@ Respond in same language.
         # ===== PDF SUMMARY =====
         elif intent == "summarize_pdf":
 
-            pdf_text = self._read_pdf(
-                self._get_latest_pdf()
-            )
-            answer = self._ask_ai(
-                f"""
-Summarize this PDF document:
+            pdf_path = self._get_latest_pdf()
 
-{pdf_text[:12000]}
-""",
-            student_id,
-            lang
-        )
+            if not pdf_path:
+                answer = "❌ لم يتم رفع أي ملف بعد" if lang == "ar" else "❌ No PDF uploaded yet"
+
+            else:
+                pdf_text = self._read_pdf(pdf_path)
+
+                answer = self._ask_ai(
+                    f"""
+        Summarize this PDF document:
+
+            {pdf_text[:12000]}
+        Provide a clear and concise summary in the same language.""",
+                student_id,
+                lang
+            )
 
 
         # ===== PDF QUIZ =====
         elif intent == "quiz":
 
-            pdf_text = self._read_pdf(
-                self._get_latest_pdf()
-            )
+            pdf_path = self._get_latest_pdf()
 
-            answer = self._ask_ai(
-                f"""
+            if not pdf_path:
+                answer = "❌ لم يتم رفع أي ملف بعد" if lang == "ar" else "❌ No PDF uploaded yet"
+
+            else:
+                pdf_text = self._read_pdf(pdf_path)
+                answer = self._ask_ai(
+                    f"""
 Create an exam from this content:
 
 {pdf_text[:12000]}
