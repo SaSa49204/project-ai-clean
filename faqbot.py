@@ -198,7 +198,7 @@ class FAQBot:
         # 👇 fallback للـ AI
         try:
             res = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-5-mini",
                 messages=[
                     {
                         "role": "system",
@@ -712,7 +712,7 @@ Create smart study plan.
         year = self._detect_student_year(completed)
 
         res = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=[
                 {
                     "role": "system",
@@ -893,6 +893,9 @@ Conversation History:
         if (
             "current courses" in q
             or "المواد الحالية" in q
+            or "المواد المسجلة" in q
+            or "اي المواد الي مسجلها" in q
+            or "المواد اللي مسجلها" in q
         ):
             return "current"
 
@@ -955,6 +958,9 @@ Conversation History:
 
 #================ LATEST PDF =================
     def _get_latest_pdf(self):
+
+        if not os.path.exists("uploads/latest.txt"):
+            return None
 
         with open(
             "uploads/latest.txt",
@@ -1059,13 +1065,21 @@ Conversation History:
 
             names = self._extract_names(
                 self._get_current_courses()
-            )
+        )
 
-            answer = (
-                "\n".join(names)
-                if names
-                else "No courses"
-            )
+            if lang == "ar":
+
+                answer = "📚 المواد المسجلة حالياً:\n\n"
+
+                for i, course in enumerate(names, 1):
+                    answer += f"{i}. {course}\n"
+
+            else:
+
+                answer = "📚 Current Courses:\n\n"
+
+                for i, course in enumerate(names, 1):
+                    answer += f"{i}. {course}\n"
 
         # ===== PREVIOUS =====
         elif intent == "previous":
@@ -1074,11 +1088,16 @@ Conversation History:
                 self._get_previous_courses()
             )
 
-            answer = (
-                "\n".join(names)
-                if names
-                else "No previous"
-            )
+            if lang == "ar":
+                answer = "✅ المواد التي تم اجتيازها:\n\n"
+                for i, course in enumerate(names, 1):
+                    answer += f"{i}. {course}\n"
+
+            else:
+                answer = "✅ Completed Courses:\n\n"
+                for i, course in enumerate(names, 1):
+                    answer += f"{i}. {course}\n"
+
         #===== COUNT COURSES =====
         elif intent == "count_courses":
 
